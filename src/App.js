@@ -5,7 +5,7 @@ class App extends Component{
   constructor(props){
     super(props);
     this.state={
-     width:50, height:40, vWrap:false, hWrap:false, matrix:[],
+     width:50, height:40, vWrap:true, hWrap:true, matrix:[],
      genCount:0, isRunning: false, interval: 100
     }
   }
@@ -21,7 +21,7 @@ class App extends Component{
         newmatrix[i].push((Math.floor((Math.random() * 2)) === 1) ? true: false);
       }
     }
-    this.setState({matrix: newmatrix});
+    this.setState({matrix: newmatrix, isRunning: true});
     this.getNewerMatrix();
   }
   getNewerMatrix(){
@@ -79,10 +79,10 @@ class App extends Component{
       }
       if (this.state.vWrap){
         if (tile.x === -1) tile.x = matrix.length -1;
-        else if (tile.x === matrix.length) tile.y = 0;                        
+        else if (tile.x === matrix.length) tile.x = 0;                        
       }
     });
-    neighborCoords.concat(filtered);
+    neighborCoords.push(...filtered);
     return neighborCoords.filter(({x,y}) =>
       ![-1, matrix[0].length].includes(y) &&
       ![-1, matrix.length].includes(x));
