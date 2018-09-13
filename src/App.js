@@ -5,8 +5,8 @@ class App extends Component{
   constructor(props){
     super(props);
     this.state={
-     width:20, height:20, vWrap:false, hWrap:false, matrix:[],
-     genCount:0, isRunning: false
+     width:50, height:40, vWrap:false, hWrap:false, matrix:[],
+     genCount:0, isRunning: false, interval: 100
     }
   }
   componentDidMount(){
@@ -18,10 +18,15 @@ class App extends Component{
     for (let i = 0; i < x; i++){
       newmatrix.push([]);
       for (let j = 0; j < y; j++){
-        newmatrix[i].push((Math.floor((Math.random() * 2)) ==1) ? true: false);
+        newmatrix[i].push((Math.floor((Math.random() * 2)) === 1) ? true: false);
       }
     }
-    this.setState({matrix: newmatrix})
+    this.setState({matrix: newmatrix});
+    this.getNewerMatrix();
+  }
+  getNewerMatrix(){
+    if (this.state.isRunning) this.getNewMatrix();
+    setTimeout(() => {this.getNewerMatrix()}, this.state.interval);
   }
   toggleCell(x,y){
     let newmatrix = this.state.matrix;
@@ -34,7 +39,7 @@ class App extends Component{
     for (let i = 0; i < st.height; i++){
       newmatrix[i].fill(false);
     }
-    this.setState({matrix: newmatrix, genCount:0})
+    this.setState({matrix: newmatrix, genCount:0, isRunning: false})
   }
   getNewMatrix(){
     const st = this.state;
@@ -44,10 +49,10 @@ class App extends Component{
       for (let j = 0; j < st.width; j++){
         let liveneighbors = this.getNeighbors(i,j,st.matrix)
           .map(({x,y}) => st.matrix[x][y])
-          .filter((tile) => tile == true)
+          .filter((tile) => tile === true)
           .length;
-        if (st.matrix[i][j]==false){
-          if(liveneighbors==3) newmatrix[i][j]=true;
+        if (st.matrix[i][j] === false){
+          if(liveneighbors === 3) newmatrix[i][j]=true;
           }
         else{
           newmatrix[i][j] = [2,3].includes(liveneighbors);
@@ -61,7 +66,7 @@ class App extends Component{
     let neighborCoords = [];
     for (let i = x-1; i < x+2; i++){
       for (let j = y-1; j < y+2; j++){
-        if(!(i==x&&j==y)) neighborCoords.push({x:i,y:j});
+        if(!(i === x && j === y)) neighborCoords.push({x:i,y:j});
       }
     }
     let filtered = neighborCoords.filter(({x,y}) =>
@@ -69,12 +74,12 @@ class App extends Component{
       .map((i) => Object.assign({}, i));
     filtered.forEach((tile)=>{
       if (this.state.hWrap){
-        if (tile.y == -1) tile.y = matrix[0].length -1;
-        else if (tile.y == matrix[0].length) tile.y = 0;
+        if (tile.y === -1) tile.y = matrix[0].length -1;
+        else if (tile.y === matrix[0].length) tile.y = 0;
       }
       if (this.state.vWrap){
-        if (tile.x == -1) tile.x = matrix.length -1;
-        else if (tile.x == matrix.length) tile.y = 0;                        
+        if (tile.x === -1) tile.x = matrix.length -1;
+        else if (tile.x === matrix.length) tile.y = 0;                        
       }
     });
     neighborCoords.concat(filtered);
@@ -82,22 +87,26 @@ class App extends Component{
       ![-1, matrix[0].length].includes(y) &&
       ![-1, matrix.length].includes(x));
   }
+
+  toggle(){
+    this.setState({isRunning: !this.state.isRunning});
+  }
  
   render(){
   const st = this.state;
   return(<div>
-    <table id="matrix">
+    <table id="matrix"><tbody>
      {st.matrix.map((row,i)=>
-        <tr className="cell">
+        <tr key = {i} className="cell">
          {row.map((column,j)=>
-            <td className={(st.matrix[i][j] ? "live" : "dead") +" cell"}
+            <td key = {i*st.matrix[i].length+j} className={(st.matrix[i][j] ? "live" : "dead") +" cell"}
               onClick={()=>this.toggleCell(i,j)}>
             </td>)}
         </tr>)
         }
-    </table>
-    <Panel clear={()=>this.clearGrid()}
-      refresh={()=>this.getNewMatrix()}
+    </tbody></table>
+    <Panel toggle={()=>this.toggle()} status = {st.isRunning}
+      clear={()=>this.clearGrid()} refresh={()=>this.getNewMatrix()}
       genCount={st.genCount}/>
     </div>)
   }
@@ -108,7 +117,7 @@ class Panel extends Component{
     const pr = this.props;
     return (<div>
       Generations: <span id="genCount">{pr.genCount}</span>
-      <button id="toggleRun">Pause</button>
+      <button onClick={pr.toggle}>{pr.status ? "Pause" : "Start"}</button>
       <button onClick={pr.refresh}>Step</button>
       <button onClick={pr.clear}>Clear</button>
     </div>)
